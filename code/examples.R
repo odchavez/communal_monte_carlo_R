@@ -1,8 +1,13 @@
 
 setwd("/Users/o/Google Drive/school/Williamson Research/Implementations/python code/test_runs")
 
+sample_dirichlet = function(priors){
+  
+}
 
 particle_filter_MVN_iter = function(data_line, priors){
+  
+  sample_dirichlet(priors)
   return()
 }
 
@@ -16,16 +21,18 @@ particle_filter_MVN = function(file_name, priors){
     next_line = readLines(f, n = 1)
     if(length(next_line) != 0){
       data_line = as.numeric(strsplit(next_line, ",")[[1]])
-      print(paste("data_line = ", data_line))
+      print("doing an iteration on")
+      print(paste("data_line = ", toString(data_line)))
+      ## Insert some if statement logic here
+      output = particle_filter_MVN_iter(data_line, priors)
+      #priors = output
     }else{
       stop = TRUE
       close(f)
     }
     
     
-    ## Insert some if statement logic here
-    output = particle_filter_MVN_iter(data_line, priors)
-    #priors = output
+   
     
   }
   return(output)

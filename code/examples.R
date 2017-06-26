@@ -1,13 +1,19 @@
+rm(list = ls())
 library(gtools)
 library(MASS)
 library(MCMCpack)
+library(mvtnorm)
+library(foreach)
+library(doParallel)
 
-setwd("/Users/o/Google Drive/school/Williamson Research/Implementations/python code/test_runs")
+setwd("/Users/o/Google Drive/school/Williamson Research/communal_monte_carlo_R")
+source("code/wasserstein_distance_functions.R")
+source("code/barycenter.R")
 
-plot_means = function(final_params){
+plot_means = function(final_params, color){
   P = length(final_params)
   for(i in 1:P){
-    points(final_params[[i]]$mean)
+    points(final_params[[i]]$mean, col = color)
   }
 }
 
@@ -63,7 +69,7 @@ sample_Sig_k = function(data_line, priors, z_i){#nu, Sig_prior, N, Y, mu, prior_
   x_bar = data_line
   p_mu = priors$mean[ z_i,]
   d = length(p_mu)
-  nu = priors$z_count[z_i]
+  nu = priors$nu[z_i]
   T     = (matrix(priors$sig[z_i,], ncol = d))*nu
 
   M     = (nu * n)/(nu + n) * 
@@ -96,10 +102,22 @@ sample_mu_k = function(data_line, priors, z_i){
   return(output)
 }
 
-sample_z_i = function(priors){
+sample_z_i = function(priors, data_line){
+  #print("enter sample_z_i")
   K = priors$K
-  prob_z_n = priors$prob
+  prob_z_n = rep(0,K)
+  w = priors$prob
+  for(k in 1:K){
+    mu = priors$mean[k,]
+    Sig = matrix(priors$sig[k,], ncol = d)
+    #print(mu)
+    #print(Sig)
+    prob_z_n[k] = w[k]*dmvnorm(data_line, mu, Sig, log=FALSE)
+  }
+  
+  #prob_z_n = priors$prob
   z_i = sample(1:K, 1, prob = prob_z_n)
+  #print("exit sample_z_i")
   return(z_i)
 }
 
@@ -112,21 +130,24 @@ sample_dirichlet = function(priors){
 }
 
 particle_filter_MVN_iter = function(data_line, priors){
-  
+  #print("entered(particle_filter_MVN_iter)")
   #weights
   prob_z_n = sample_dirichlet(priors)
   priors$prob = prob_z_n
+  #print("2 ran")
   #counts and class assignment
-  z_i      = sample_z_i(priors)
+  z_i      = sample_z_i(priors, data_line)
   priors$z_count[z_i] = priors$z_count[z_i] + 1
   priors$nu[z_i] = priors$nu[z_i] + 1
+  #print("3 ran")
   #mean
   mu_k = sample_mu_k(data_line, priors, z_i)
   priors$mean[z_i,] = mu_k
+  #print("4 ran")
   
   Sig_k = sample_Sig_k(data_line, priors, z_i)
   priors$sig[z_i,] = Sig_k
-  
+  #print("5 ran")
   return(priors)
 }
 
@@ -136,13 +157,16 @@ particle_filter_MVN = function(file_name, priors_list, np, data_size){
   stop = FALSE
   f = file(file_name, "r")
   count = 0
-  while(!stop) {
+  while(!stop){
     
     next_line = readLines(f, n = 1)
+    #print(paste("next_line = ", next_line))
     if(length(next_line) != 0){
-      count = count+1
+      
       print(paste(100*count/data_size, "% complete"))
       data_line = as.numeric(strsplit(next_line, ",")[[1]])
+      if(is.na(data_line)){next}
+      count = count+1
       #print("doing an iteration on")
       #print(paste("data_line = ", toString(data_line)))
       ## Insert some if statement logic here
@@ -155,6 +179,10 @@ particle_filter_MVN = function(file_name, priors_list, np, data_size){
       #print(log_lik_wts)
       posterior = sample_particles(log_lik_wts, candidate_particles)
       priors_list = posterior
+      #if(count%%500 == 0){
+      #  plot_means(priors_list)  
+      #}
+      
     }else{
       stop = TRUE
       close(f)
@@ -162,38 +190,90 @@ particle_filter_MVN = function(file_name, priors_list, np, data_size){
   }
   return(priors_list)
 }
-
-#MVN mixture Gibbs Sampler
-data_size = 3000
-K         = 5
-d         = 2
-shard_num = 1
-scale     = 5
-np        = 100
-data_file = paste('data/MVN_train_data_K=',
-                  toString(K),'_data_size=',
-                  toString(data_size),'.csv',
-                  sep = "")
-
-#priors
-prob      = matrix(rep(1/K, K), ncol = K, nrow = 1)
-mean      = matrix(rep(0, d*K), ncol = d, nrow = K)
-sig       = t(matrix(as.vector(diag(d))*scale, ncol = K, nrow = d*d))
-#params
-z_count         = matrix(rep(0, K), ncol = K)
-alpha_k = matrix(rep(1, K), ncol = K)
-nu      = matrix(rep(2, K), ncol = K)
-priors = list(prob = prob, 
-              z_count = z_count, 
-              alpha_k = alpha_k, 
-              mean = mean,
-              mean_size_init = alpha_k,
-              sig = sig, 
-              K = K,
-              nu = nu)
-
-priors_list = list(priors)[rep(1,np)]
-plot(read.csv(data_file))
-final_params = particle_filter_MVN(data_file, priors_list, np, data_size)
-plot_means(final_params)
+get_default_priors = function(K, d, scale, np, shard_num){
+  #priors
+  prob      = matrix(rep(1/K, K), ncol = K, nrow = 1)
+  mean      = t(matrix(rep(0, K*d) , nrow = d))#matrix(rep(0, d*K), ncol = d, nrow = K)
+  sig       = t(matrix(as.vector(diag(d))*scale, ncol = K, nrow = d*d))
+  #params
+  z_count = matrix(rep(0, K), ncol = K)
+  alpha_k = matrix(rep(1, K), ncol = K)
+  nu      = matrix(rep(2, K), ncol = K)
+  priors  = list(prob = prob, 
+                z_count = z_count, 
+                alpha_k = alpha_k, 
+                mean = mean,
+                mean_size_init = alpha_k,
+                sig = sig, 
+                K = K,
+                nu = nu)
   
+  priors_list = list(priors)[rep(1,np)]
+  output = list(priors_list)[rep(1,shard_num)]
+  return(output)
+}
+
+get_new_priors = function(final_params, shard_num, np){
+  master_list   = c()
+  output_priors = list()
+  for(i in 1:shard_num){
+    master_list = c(master_list, final_params[[i]])
+  }
+  distMat = get_distMat(final_params)
+  colMeasure = get_colMeasure(final_params)
+  con_rel_sol = Barycenter_measure(colMeasure, distMat, maxIter = 20, lambda = 0.1)
+  
+  for(i in 1:shard_num){
+    index = sample(np*shard_num, np, replace = TRUE, prob = con_rel_sol)
+    temp = list()
+    for(ind in 1:np){
+      temp[[ind]] = master_list[[index[ind]]] 
+    }
+    output_priors[[i]] = temp
+    
+  }
+  return(output_priors)
+}
+#MVN mixture Gibbs Sampler
+shard_num    = 4
+global_steps = 2
+n            = 1000
+K            = 10
+d            = 2
+scale        = 10
+np           = 1000
+
+
+
+priors_list = get_default_priors(K, d, scale, np, shard_num)
+
+for(gs in 1:global_steps){
+  cl <- makeCluster(shard_num)
+  registerDoParallel(cl)
+  final_params = foreach(i = 1:shard_num, .packages = c("MCMCpack", "mvtnorm")) %dopar%{
+    file_num = i + (gs - 1)*shard_num
+    data_file = paste('data/K=',    toString(K),
+                      '/d=',        toString(d),
+                      '_n=',        toString(n),
+                      '_file_num_', toString(file_num),
+                      '.csv',sep = "")
+    particle_filter_MVN(data_file, priors_list[[i]], np, n)
+    #particle_filter_MVN(data_file, priors_list, np, n)
+  }
+  stopCluster(cl)
+  print(paste("performing global step", gs))
+  priors_list = get_new_priors(final_params, shard_num, np)
+}
+  
+
+plot(read.csv(paste('data/K=',    toString(K),
+                    '/d=',        toString(d),
+                    '_n=',        toString(n),
+                    '_file_num_', toString(1),
+                    '.csv',sep = "")))
+for(i in 1:shard_num){
+  plot_means(final_params[[i]], i)
+}
+
+
+

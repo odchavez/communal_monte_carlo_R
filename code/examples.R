@@ -234,6 +234,20 @@ get_new_priors = function(final_params, shard_num, np){
   }
   return(output_priors)
 }
+
+save_particles = function(particles, shard_num, global_steps, K, d, n, np){
+  
+  file_name = paste('particles/',     toString(K),
+                    'd=',             toString(d),
+                    '_n=',            toString(n*shard_num*global_steps),
+                    '_pn=',     toString(np),
+                    '_sn=',    toString(shard_num),
+                    '_gs=', toString(global_steps),
+                    '_time=',      toString(as.numeric(Sys.time())) ,
+                    '.RData',sep = "")
+  
+  save(particles, file = file_name)
+}
 #MVN mixture Gibbs Sampler
 shard_num    = 4
 global_steps = 2
@@ -264,7 +278,8 @@ for(gs in 1:global_steps){
   print(paste("performing global step", gs))
   priors_list = get_new_priors(final_params, shard_num, np)
 }
-  
+save_particles(final_params, shard_num, global_steps, K, d, n, np)
+
 
 plot(read.csv(paste('data/K=',    toString(K),
                     '/d=',        toString(d),
@@ -272,7 +287,7 @@ plot(read.csv(paste('data/K=',    toString(K),
                     '_file_num_', toString(1),
                     '.csv',sep = "")))
 for(i in 1:shard_num){
-  plot_means(final_params[[i]], i)
+  plot_means(final_params[[i]], i+1)
 }
 
 

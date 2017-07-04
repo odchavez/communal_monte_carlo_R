@@ -35,7 +35,7 @@
 #<environment: namespace:Barycenter>
 library(Barycenter)
 Barycenter_measure = function(colMeasure, distMat, maxIter = 100, lambda){# = 1/median(distMat)){
-  
+    #modified barycenter to accommodate measures in different locations.
     time <- proc.time()
     #dimension <- dim(images[[1]])
     #n <- dimension[1] * dimension[2]

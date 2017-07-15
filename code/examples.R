@@ -6,27 +6,29 @@ library(mvtnorm)
 library(foreach)
 library(doParallel)
 
-setwd("/Users/o/Google Drive/school/Williamson Research/communal_monte_carlo_R")
+#setwd("/communal_monte_carlo_R/communal_monte_carlo_R")
 source("code/wasserstein_distance_functions.R")
-source("code/barycenter.R")
+source("code/barycenter.r")
 source("code/communal_monte_carlo_functions.R")
 
 
 #MVN mixture Gibbs Sampler
-shard_num    = 16
-global_steps = 6
-n            = 10000
-K            = 20
-d            = 2
-scale        = 100
-np           = 1000
+shard_num      = 4
+global_steps   = 1
+n              = 10000
+quit_after_n   = 100
+K              = 20
+d              = 2
+scale          = 100
+np             = 10
+experiment_num = 1
 
 
 
 priors_list    = get_default_priors(K, d, scale, np, shard_num)
-posterior_list = do_communal_mc_MVN_mix(global_steps, shard_num, K, d, n, priors_list)
+posterior_list = do_communal_mc_MVN_mix(global_steps, shard_num, K, d, n, priors_list, quit_after_n, experiment_num)
 
-save_particles(posterior_list, shard_num, global_steps, K, d, n, np)
+save_particles(posterior_list, shard_num, global_steps, K, d, n, np, experiment_num, quit_after_n)
 
 
 plot(read.csv(paste('data/K=',    toString(K),

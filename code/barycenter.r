@@ -33,6 +33,7 @@
 #    return(a)
 #}
 #<environment: namespace:Barycenter>
+if("Barycenter" %in% rownames(installed.packages()) == FALSE) {install.packages("Barycenter")}
 library(Barycenter)
 Barycenter_measure = function(colMeasure, distMat, maxIter = 100, lambda){# = 1/median(distMat)){
     #modified barycenter to accommodate measures in different locations.

@@ -141,7 +141,7 @@ particle_filter_MVN_iter = function(data_line, priors){
 }
 
 
-particle_filter_MVN = function(file_name, priors_list, np, data_size){
+particle_filter_MVN = function(file_name, priors_list, np, data_size, quit_after_n, gs, sn, experiment_num, global_steps){
   
   stop = FALSE
   f = file(file_name, "r")
@@ -150,12 +150,26 @@ particle_filter_MVN = function(file_name, priors_list, np, data_size){
     
     next_line = readLines(f, n = 1)
     #print(paste("next_line = ", next_line))
-    if(length(next_line) != 0){
+    if(length(next_line) != 0 & count < quit_after_n){
       
-      print(paste(100*count/data_size, "% complete"))
+      
+      
+      #print(paste(100*count/data_size, "% complete"))
+      
+      #sink("logfiles/log.txt", append=TRUE)
+      #cat()
+      
+      cat(paste("log_gs=",gs, "out of _",global_steps, " ", 
+                100*count/min(quit_after_n,data_size), 
+                "% complete", "\n"), 
+          file=paste0("logfiles/experiment_num=",
+                      experiment_num,"_shard=",sn,".txt"), 
+          append=TRUE)
+      
       data_line = as.numeric(strsplit(next_line, ",")[[1]])
       if(is.na(data_line)){next}
       count = count+1
+      print(count)
       #print("doing an iteration on")
       #print(paste("data_line = ", toString(data_line)))
       ## Insert some if statement logic here
@@ -224,15 +238,21 @@ get_new_priors = function(final_params, shard_num, np){
   return(output_priors)
 }
 
-save_particles = function(particles, shard_num, global_steps, K, d, n, np){
+save_particles = function(particles, 
+                          shard_num, 
+                          global_steps, 
+                          K, d, n, np, 
+                          experiment_num, 
+                          quit_after_n){
   
-  file_name = paste('particles/',     toString(K),
-                    'd=',             toString(d),
-                    '_n=',            toString(n*shard_num*global_steps),
-                    '_pn=',     toString(np),
-                    '_sn=',    toString(shard_num),
+  file_name = paste('particles/',     
+                    'K=',   toString(K),
+                    'd=',   toString(d),
+                    '_n=',  toString(min(n, quit_after_n)*shard_num*global_steps),
+                    '_pn=', toString(np),
+                    '_sn=', toString(shard_num),
                     '_gs=', toString(global_steps),
-                    '_time=',      toString(as.numeric(Sys.time())) ,
+                    '_experiment_number=',      toString(experiment_num) ,
                     '.RData',sep = "")
   
   save(particles, file = file_name)
@@ -247,21 +267,50 @@ omars_file_name = function(K, d, n, file_num){
   return(output)
 }
 
-do_communal_mc_MVN_mix = function(global_steps, shard_num, K, d, n, priors_list){
+#open_log_file = function(){
+#  file_name = paste('logfiles/',     toString(K),
+#                    'd=',             toString(d),
+#                    '_n=',            toString(n*shard_num*global_steps),
+#                    '_pn=',     toString(np),
+#                    '_sn=',    toString(shard_num),
+#                    '_gs=', toString(global_steps),
+#                    '_time=',      toString(as.numeric(Sys.time())) ,
+#                    '.RData',sep = "")
+#  writeLines(c(""), paste("logfiles/log.txt"))
+#  
+#}
+
+do_communal_mc_MVN_mix = function(global_steps, shard_num, K, d, n, priors_list, quit_after_n, experiment_num){
   for(gs in 1:global_steps){
+    
+    
+    
     cl <- makeCluster(shard_num)
     registerDoParallel(cl)
-    final_params = foreach(i = 1:shard_num, 
+    final_params = foreach(sn = 1:shard_num, 
                            .packages = c("MCMCpack", "mvtnorm")) %dopar%{
       source("code/communal_monte_carlo_functions.R")
-      file_num  = i + (gs - 1)*shard_num
+                             
+      writeLines(c(""), paste0("logfiles/experiment_num=",experiment_num,"_shard=",sn,".txt"))
+                             
+      #sn = 1                       
+      file_num  = sn + (gs - 1)*shard_num
       data_file = omars_file_name(K, d, n, file_num)
-      particle_filter_MVN(data_file, priors_list[[i]], length(priors_list[[i]]), n)
+      particle_filter_MVN(data_file, priors_list[[sn]], length(priors_list[[sn]]), n, quit_after_n, gs, sn,experiment_num, global_steps)
+      
+      
+      
       #particle_filter_MVN(data_file, priors_list, np, n)
     }
     stopCluster(cl)
     print(paste("performing global step", gs))
-    priors_list = get_new_priors(final_params, shard_num, np)
+    if(global_steps == 1){
+      priors_list = final_params
+    }else{
+      priors_list = get_new_priors(final_params, shard_num, np)
+      print(paste("global step", gs, "complete"))
+    }
+    
   }
   return(priors_list)
 }

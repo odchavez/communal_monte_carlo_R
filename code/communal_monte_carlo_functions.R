@@ -280,7 +280,7 @@ omars_file_name = function(K, d, n, file_num){
 #  
 #}
 
-do_communal_mc_MVN_mix = function(global_steps, shard_num, K, d, n, priors_list, quit_after_n, experiment_num){
+do_communal_mc_MVN_mix = function(global_steps, shard_num, K, d, n, priors_list, quit_after_n, experiment_num, gstep_com){
   for(gs in 1:global_steps){
     
     
@@ -303,10 +303,11 @@ do_communal_mc_MVN_mix = function(global_steps, shard_num, K, d, n, priors_list,
       #particle_filter_MVN(data_file, priors_list, np, n)
     }
     stopCluster(cl)
-    print(paste("performing global step", gs))
-    if(global_steps == 1){
+    
+    if(gstep_com == FALSE){
       priors_list = final_params
     }else{
+      print(paste("performing global step", gs))
       priors_list = get_new_priors(final_params, shard_num, np)
       print(paste("global step", gs, "complete"))
     }

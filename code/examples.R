@@ -14,15 +14,15 @@ source("code/communal_monte_carlo_functions.R")
 
 #MVN mixture Gibbs Sampler
 shard_num      = 4
-global_steps   = 1
+global_steps   = 2
 n              = 10000
-quit_after_n   = 10000
+quit_after_n   = 5000
 K              = 20
 d              = 2
 scale          = 100
 np             = 1000
-experiment_num = 1
-gstep_com      = FALSE
+experiment_num = 2
+gstep_com      = TRUE
 
 
 

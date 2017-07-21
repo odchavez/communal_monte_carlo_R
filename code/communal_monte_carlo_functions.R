@@ -315,3 +315,21 @@ do_communal_mc_MVN_mix = function(global_steps, shard_num, K, d, n, priors_list,
   }
   return(priors_list)
 }
+
+experiment_log_lik = function(test_dat, particles, EXP){
+  count = 1
+  N = nrow(test_dat)
+  S = length(particles)
+  P = length(particles[[1]])
+  experiment_log_lik_vec = rep(NA, N*S*P)
+  for(n in 1:N){
+    print(paste0("analyzing experiment ",EXP,".....", 100*n/N,"% complete"))
+    for(s in 1:S){
+      for(p in 1:P){
+        experiment_log_lik_vec[count] = log_lik_mvn_mix(particles[[s]][[p]], test_dat[n,])
+        count = count + 1
+      }
+    }
+  }
+  return(experiment_log_lik_vec)
+}

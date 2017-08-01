@@ -7,6 +7,8 @@ plot_means = function(final_params, color){
 
 sample_particles = function(log_lik_wts, candidate_particles){
   np = length(log_lik_wts)
+  print("in sample_particles")
+  print( exp(log_lik_wts))
   select = sample(np, np, prob = exp(log_lik_wts), replace = TRUE)
   particles_out = list()
   for(p in 1:np){
@@ -105,6 +107,8 @@ sample_z_i = function(priors, data_line){
   }
   
   #prob_z_n = priors$prob
+  print("in sample_z_i")
+  print(prob_z_n)
   z_i = sample(1:K, 1, prob = prob_z_n)
   #print("exit sample_z_i")
   return(z_i)
@@ -217,16 +221,22 @@ get_default_priors = function(K, d, scale, np, shard_num){
 }
 
 get_new_priors = function(final_params, shard_num, np){
+  print("in get_new_priors")
   master_list   = c()
   output_priors = list()
   for(i in 1:shard_num){
     master_list = c(master_list, final_params[[i]])
   }
   distMat = get_distMat(final_params)
+  print("distMat")
+  print(distMat)
   colMeasure = get_colMeasure(final_params)
+  print("colMeasure")
+  print(colMeasure)
   con_rel_sol = Barycenter_measure(colMeasure, distMat, maxIter = 20, lambda = 0.1)
-  
+  print(con_rel_sol)
   for(i in 1:shard_num){
+
     index = sample(np*shard_num, np, replace = TRUE, prob = con_rel_sol)
     temp = list()
     for(ind in 1:np){
@@ -317,13 +327,16 @@ do_communal_mc_MVN_mix = function(global_steps, shard_num, K, d, n, priors_list,
 }
 
 experiment_log_lik = function(test_dat, particles, EXP){
+  print(paste0("analyzing experiment ",EXP))
   count = 1
   N = nrow(test_dat)
   S = length(particles)
   P = length(particles[[1]])
   experiment_log_lik_vec = rep(NA, N*S*P)
   for(n in 1:N){
-    print(paste0("analyzing experiment ",EXP,".....", 100*n/N,"% complete"))
+    if(100*N/n %% 10 == 0){
+      print(paste0("analyzing experiment ",EXP,".....", 100*n/N,"% complete"))
+    }
     for(s in 1:S){
       for(p in 1:P){
         experiment_log_lik_vec[count] = log_lik_mvn_mix(particles[[s]][[p]], test_dat[n,])

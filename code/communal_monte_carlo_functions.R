@@ -46,7 +46,7 @@ log_lik_mvn_mix = function(param_sample, dat){
     Sig =  matrix(S[i,], ncol = 2)
     comps[i] = log(w[i]) + log_lik_mvn(mu, Sig, dat)
   }
-  #print(comps)
+  print(comps)
   output = log(sum(exp(comps)))
   return(output)
 }
@@ -81,11 +81,11 @@ sample_mu_k = function(data_line, priors, z_i){
   n              = 1
   nu             = priors$nu[z_i]
   post_mean = (prior_obs_size * prior_mu + n*data_line)/(prior_obs_size + n)
-  #print(post_mean)
+  print(post_mean)
   d = length(prior_mu)
-  #print(class(z_i))
-  #print(priors$sig[z_i,])
-  #print(matrix(priors$sig[z_i,], ncol = d))
+  print(class(z_i))
+  print(priors$sig[z_i,])
+  print(matrix(priors$sig[z_i,], ncol = d))
   post_cov = matrix(priors$sig[z_i,], ncol = d)/(nu * (nu - d + 1))
   output = mvrnorm(n = 1, post_mean, post_cov)
   
@@ -93,7 +93,7 @@ sample_mu_k = function(data_line, priors, z_i){
 }
 
 sample_z_i = function(priors, data_line){
-  #print("enter sample_z_i")
+  print("enter sample_z_i")
   K = priors$K
   prob_z_n = rep(0,K)
   w = priors$prob
@@ -101,16 +101,16 @@ sample_z_i = function(priors, data_line){
   for(k in 1:K){
     mu = priors$mean[k,]
     Sig = matrix(priors$sig[k,], ncol = d)
-    #print(mu)
-    #print(Sig)
-    prob_z_n[k] = w[k]*dmvnorm(data_line, mu, Sig, log=FALSE)
+    print(mu)
+    print(Sig)
+    prob_z_n[k] = w[k]*dmvnorm(data_line, mu, Sig, log=TRUE)
   }
   
   #prob_z_n = priors$prob
   print("in sample_z_i")
   print(prob_z_n)
-  z_i = sample(1:K, 1, prob = prob_z_n)
-  #print("exit sample_z_i")
+  z_i = sample(1:K, 1, prob = exp(prob_z_n))
+  print("exit sample_z_i")
   return(z_i)
 }
 
@@ -118,29 +118,29 @@ sample_dirichlet = function(priors){
   n = sum(priors$z_count)
   alpha_vec = (priors$z_count + priors$alpha_k)#/(n - 1 + sum(priors$alpha_k))
   prob_z_n = rdirichlet(1, alpha_vec)
-  #print(prob_z_n)
+  print(prob_z_n)
   return(prob_z_n)
 }
 
 particle_filter_MVN_iter = function(data_line, priors){
-  #print("entered(particle_filter_MVN_iter)")
+  print("entered(particle_filter_MVN_iter)")
   #weights
   prob_z_n = sample_dirichlet(priors)
   priors$prob = prob_z_n
-  #print("2 ran")
+  print("2 ran")
   #counts and class assignment
   z_i      = sample_z_i(priors, data_line)
   priors$z_count[z_i] = priors$z_count[z_i] + 1
   priors$nu[z_i] = priors$nu[z_i] + 1
-  #print("3 ran")
+  print("3 ran")
   #mean
   mu_k = sample_mu_k(data_line, priors, z_i)
   priors$mean[z_i,] = mu_k
-  #print("4 ran")
+  print("4 ran")
   
   Sig_k = sample_Sig_k(data_line, priors, z_i)
   priors$sig[z_i,] = Sig_k
-  #print("5 ran")
+  print("5 ran")
   return(priors)
 }
 
@@ -173,7 +173,7 @@ particle_filter_MVN = function(file_name, priors_list, np, data_size, quit_after
       data_line = as.numeric(strsplit(next_line, ",")[[1]])
       if(is.na(data_line)){next}
       count = count+1
-      print(count)
+      #print(count)
       #print("doing an iteration on")
       #print(paste("data_line = ", toString(data_line)))
       ## Insert some if statement logic here
@@ -197,6 +197,31 @@ particle_filter_MVN = function(file_name, priors_list, np, data_size, quit_after
   }
   return(priors_list)
 }
+
+particle_filter_MVN_single_file = function(dat, priors_list, np, gs, sn, experiment_num, global_steps){
+  
+    count = 0
+    data_size = nrow(dat)
+    for(i in 1:data_size){
+        cat(paste("log_gs=",gs, "out of _",global_steps, " ", 
+                  100*i/data_size, 
+                  "% complete", "\n"), 
+            file=paste0("logfiles/experiment_num=",
+                        experiment_num,"_shard=",sn,".txt"), 
+            append=TRUE)
+        candidate_particles = list()
+        log_lik_wts = rep(0, np)
+        for(p in 1:np){
+            candidate_particles[[p]] = particle_filter_MVN_iter(as.numeric(dat[i,]), priors_list[[p]])
+            log_lik_wts[p]           = log_lik_mvn_mix(candidate_particles[[p]], as.numeric(dat[i,]))
+        }
+        #print(log_lik_wts)
+        posterior = sample_particles(log_lik_wts, candidate_particles)
+        priors_list = posterior
+    }
+    return(priors_list)
+}
+
 get_default_priors = function(K, d, scale, np, shard_num){
   #priors
   prob      = matrix(rep(1/K, K), ncol = K, nrow = 1)
@@ -252,17 +277,19 @@ save_particles = function(particles,
                           shard_num, 
                           global_steps, 
                           K, d, n, np, 
-                          experiment_num, 
-                          quit_after_n){
+                          experiment_num,
+                          file_num){
   
   file_name = paste('particles/',     
                     'K=',   toString(K),
                     'd=',   toString(d),
-                    '_n=',  toString(min(n, quit_after_n)*shard_num*global_steps),
+                    #'_n=',  toString(min(n, quit_after_n)*shard_num*global_steps),
+                    '_n=',  toString(n),
                     '_pn=', toString(np),
                     '_sn=', toString(shard_num),
                     '_gs=', toString(global_steps),
                     '_experiment_number=',      toString(experiment_num) ,
+                    '_file_num', toString(file_num),
                     '.RData',sep = "")
   
   save(particles, file = file_name)
@@ -326,6 +353,49 @@ do_communal_mc_MVN_mix = function(global_steps, shard_num, K, d, n, priors_list,
   return(priors_list)
 }
 
+do_communal_mc_MVN_mix_single_file = function(dat, global_steps, shard_num, priors_list, experiment_num, gstep_com){
+  
+  data_part = partition_data(dat, global_steps, shard_num)
+  for(gs in 1:global_steps){
+    #cl <- makeCluster(shard_num)
+    #registerDoParallel(cl)
+    #final_params = foreach(sn = 1:shard_num, 
+    #                       .packages = c("MCMCpack", "mvtnorm")) %dopar%{
+    #                         source("code/communal_monte_carlo_functions.R")
+    #                         writeLines(c(""), paste0("logfiles/experiment_num=",experiment_num,"_shard=",sn,".txt"))
+    #                         particle_filter_MVN_single_file( data_part[[sn]][[gs]], 
+    #                                                          priors_list[[sn]], 
+    #                                                          length(priors_list[[sn]]), 
+    #                                                          gs, 
+    #                                                          sn,
+    #                                                          experiment_num, 
+    #                                                          global_steps)
+    #                       }
+    #stopCluster(cl)
+    ##################################
+    #to debug use:
+    final_params = list()
+    for(sn in 1:shard_num){
+        final_params[[sn]] = particle_filter_MVN_single_file( data_part[[sn]][[gs]], 
+                                         priors_list[[sn]], 
+                                         length(priors_list[[sn]]), 
+                                         gs, 
+                                         sn,
+                                         experiment_num, 
+                                         global_steps)
+    }
+    ###################################
+    
+    if(gstep_com == FALSE){
+      priors_list = final_params
+    }else{
+      print(paste("performing global step", gs))
+      priors_list = get_new_priors(final_params, shard_num, np)
+      print(paste("global step", gs, "complete"))
+    }
+  }
+  return(priors_list)
+}
 experiment_log_lik = function(test_dat, particles, EXP){
   print(paste0("analyzing experiment ",EXP))
   count = 1
@@ -345,4 +415,24 @@ experiment_log_lik = function(test_dat, particles, EXP){
     }
   }
   return(experiment_log_lik_vec)
+}
+
+partition_data = function(data, global_steps, shard_num){
+  
+    temp = df_split(data, shard_num)
+    output = list()
+    for(s in 1:shard_num){
+        output[[s]] = df_split(temp[[s]], global_steps)
+    }
+    return(output)
+}
+
+df_split <- function (df, number){
+  sizedf      <- length(df[,1])
+  bound       <- sizedf/number
+  list        <- list() 
+  for (i in 1:number){
+    list[i] <- list(df[((i*bound+1)-bound):(i*bound),])
+  }
+  return(list)
 }

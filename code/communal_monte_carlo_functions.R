@@ -8,7 +8,7 @@ plot_means = function(final_params, color){
 sample_particles = function(log_lik_wts, candidate_particles){
   np = length(log_lik_wts)
   print("in sample_particles")
-  print( exp(log_lik_wts))
+  #print( exp(log_lik_wts))
   select = sample(np, np, prob = exp(log_lik_wts), replace = TRUE)
   particles_out = list()
   for(p in 1:np){
@@ -46,7 +46,7 @@ log_lik_mvn_mix = function(param_sample, dat){
     Sig =  matrix(S[i,], ncol = 2)
     comps[i] = log(w[i]) + log_lik_mvn(mu, Sig, dat)
   }
-  print(comps)
+  #print(comps)
   output = log(sum(exp(comps)))
   return(output)
 }
@@ -81,11 +81,11 @@ sample_mu_k = function(data_line, priors, z_i){
   n              = 1
   nu             = priors$nu[z_i]
   post_mean = (prior_obs_size * prior_mu + n*data_line)/(prior_obs_size + n)
-  print(post_mean)
+  #print(post_mean)
   d = length(prior_mu)
-  print(class(z_i))
-  print(priors$sig[z_i,])
-  print(matrix(priors$sig[z_i,], ncol = d))
+  #print(class(z_i))
+  #print(priors$sig[z_i,])
+  #print(matrix(priors$sig[z_i,], ncol = d))
   post_cov = matrix(priors$sig[z_i,], ncol = d)/(nu * (nu - d + 1))
   output = mvrnorm(n = 1, post_mean, post_cov)
   
@@ -215,7 +215,8 @@ particle_filter_MVN_single_file = function(dat, priors_list, np, gs, sn, experim
             candidate_particles[[p]] = particle_filter_MVN_iter(as.numeric(dat[i,]), priors_list[[p]])
             log_lik_wts[p]           = log_lik_mvn_mix(candidate_particles[[p]], as.numeric(dat[i,]))
         }
-        #print(log_lik_wts)
+        print("log_lik_wts")
+        print(log_lik_wts)
         posterior = sample_particles(log_lik_wts, candidate_particles)
         priors_list = posterior
     }
@@ -246,7 +247,7 @@ get_default_priors = function(K, d, scale, np, shard_num){
 }
 
 get_new_priors = function(final_params, shard_num, np){
-  print("in get_new_priors")
+  #print("in get_new_priors")
   master_list   = c()
   output_priors = list()
   for(i in 1:shard_num){

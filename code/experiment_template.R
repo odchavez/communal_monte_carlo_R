@@ -46,10 +46,10 @@ for(g in 1:100){#max_global_step){
                                                             priors_list, 
                                                             experiment_num, 
                                                             gstep_com)
-        save_particles(posterior_list, shard_num, global_steps, K, d, n, np, experiment_num, file_num)
+        #save_particles(posterior_list, shard_num, global_steps, K, d, n, np, experiment_num, file_num)
         
-        fraction = ((g-1)+fn)/(max_global_step*max_file_num)
-        log_lik = c(log_lik, experiment_log_lik(test_dat, posterior_list, fraction))
+        #fraction = ((g-1)+fn)/(max_global_step*max_file_num)
+        #log_lik = c(log_lik, experiment_log_lik(test_dat, posterior_list, fraction))
 
         
         
@@ -59,13 +59,6 @@ for(g in 1:100){#max_global_step){
     log_lik_matrix[g,"sd"]           = sd(log_lik)/sqrt(length(log_lik))
 }
 plot(log_lik_matrix[,"global_steps"], log_lik_matrix[,"mean"])
-
-#plot(read.csv(paste('data/K=',    toString(K),
-#                    '/d=',        toString(d),
-#                    '_n=',        toString(n),
-#                    '_file_num_', toString(1),
-#                    '.csv',sep = "")))
-#for(i in 1:shard_num){plot_means(posterior_list[[i]], i+1)}
 
 
 

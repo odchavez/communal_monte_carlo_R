@@ -8,14 +8,26 @@ plot_means = function(final_params, color){
 sample_particles = function(log_lik_wts, candidate_particles){
   np = length(log_lik_wts)
   print("in sample_particles")
-  #print( exp(log_lik_wts))
-  select = sample(np, np, prob = exp(log_lik_wts), replace = TRUE)
+  print( "log_lik_wts = ")
+  print(log_lik_wts)
+  print( "exp(log_lik_wts = ")
+  print( exp(log_lik_wts))
+  
+  pn = length(log_lik_wts)
+  p = exp(log_lik_wts)
+  p_index = which(p != 0)
+  if(length(p_index) == 0){
+    p = rep(1/pn, pn)
+  }
+  
+  select = sample(np, np, prob = p, replace = TRUE)
   particles_out = list()
   for(p in 1:np){
     cp = select[p]
     particles_out[[p]] = candidate_particles[[cp]]
     #points(particles_out[[p]]$mean, col = 'red')
   }
+  print("exit sample_particles")
   return(particles_out)
 }
 
@@ -35,7 +47,7 @@ log_lik_mvn = function(mu, Sig, dat){
 }
 
 log_lik_mvn_mix = function(param_sample, dat){
-  
+  #print("enter log_lik_mvn_mix")
   w = param_sample$prob
   M = param_sample$mean
   S = param_sample$sig
@@ -46,8 +58,10 @@ log_lik_mvn_mix = function(param_sample, dat){
     Sig =  matrix(S[i,], ncol = 2)
     comps[i] = log(w[i]) + log_lik_mvn(mu, Sig, dat)
   }
+  #print("comps = ")
   #print(comps)
-  output = log(sum(exp(comps)))
+  output = log_sum_exp(comps)#log(sum(exp(comps)))
+  #print("exit log_lik_mvn_mix")
   return(output)
 }
 
@@ -93,7 +107,7 @@ sample_mu_k = function(data_line, priors, z_i){
 }
 
 sample_z_i = function(priors, data_line){
-  print("enter sample_z_i")
+  #print("enter sample_z_i")
   K = priors$K
   prob_z_n = rep(0,K)
   w = priors$prob
@@ -101,16 +115,16 @@ sample_z_i = function(priors, data_line){
   for(k in 1:K){
     mu = priors$mean[k,]
     Sig = matrix(priors$sig[k,], ncol = d)
-    print(mu)
-    print(Sig)
+    #print(mu)
+    #print(Sig)
     prob_z_n[k] = w[k]*dmvnorm(data_line, mu, Sig, log=TRUE)
   }
   
   #prob_z_n = priors$prob
-  print("in sample_z_i")
-  print(prob_z_n)
+  #print("in sample_z_i")
+  #print(prob_z_n)
   z_i = sample(1:K, 1, prob = exp(prob_z_n))
-  print("exit sample_z_i")
+  #print("exit sample_z_i")
   return(z_i)
 }
 
@@ -118,29 +132,29 @@ sample_dirichlet = function(priors){
   n = sum(priors$z_count)
   alpha_vec = (priors$z_count + priors$alpha_k)#/(n - 1 + sum(priors$alpha_k))
   prob_z_n = rdirichlet(1, alpha_vec)
-  print(prob_z_n)
+  #print(prob_z_n)
   return(prob_z_n)
 }
 
 particle_filter_MVN_iter = function(data_line, priors){
-  print("entered(particle_filter_MVN_iter)")
+  #print("entered(particle_filter_MVN_iter)")
   #weights
   prob_z_n = sample_dirichlet(priors)
   priors$prob = prob_z_n
-  print("2 ran")
+  #print("2 ran")
   #counts and class assignment
   z_i      = sample_z_i(priors, data_line)
   priors$z_count[z_i] = priors$z_count[z_i] + 1
   priors$nu[z_i] = priors$nu[z_i] + 1
-  print("3 ran")
+  #print("3 ran")
   #mean
   mu_k = sample_mu_k(data_line, priors, z_i)
   priors$mean[z_i,] = mu_k
-  print("4 ran")
+  #print("4 ran")
   
   Sig_k = sample_Sig_k(data_line, priors, z_i)
   priors$sig[z_i,] = Sig_k
-  print("5 ran")
+  #print("5 ran")
   return(priors)
 }
 
@@ -199,7 +213,7 @@ particle_filter_MVN = function(file_name, priors_list, np, data_size, quit_after
 }
 
 particle_filter_MVN_single_file = function(dat, priors_list, np, gs, sn, experiment_num, global_steps){
-  
+    #print("enter particle_filter_MVN_single_file")
     count = 0
     data_size = nrow(dat)
     for(i in 1:data_size){
@@ -215,11 +229,12 @@ particle_filter_MVN_single_file = function(dat, priors_list, np, gs, sn, experim
             candidate_particles[[p]] = particle_filter_MVN_iter(as.numeric(dat[i,]), priors_list[[p]])
             log_lik_wts[p]           = log_lik_mvn_mix(candidate_particles[[p]], as.numeric(dat[i,]))
         }
-        print("log_lik_wts")
-        print(log_lik_wts)
+        #print("log_lik_wts")
+        #print(log_lik_wts)
         posterior = sample_particles(log_lik_wts, candidate_particles)
         priors_list = posterior
     }
+    #print("exit particle_filter_MVN_single_file")
     return(priors_list)
 }
 
@@ -254,13 +269,22 @@ get_new_priors = function(final_params, shard_num, np){
     master_list = c(master_list, final_params[[i]])
   }
   distMat = get_distMat(final_params)
-  print("distMat")
-  print(distMat)
+  #print("distMat")
+  #print(distMat)
   colMeasure = get_colMeasure(final_params)
-  print("colMeasure")
-  print(colMeasure)
-  con_rel_sol = Barycenter_measure(colMeasure, distMat, maxIter = 20, lambda = 0.1)
-  print(con_rel_sol)
+  #print("colMeasure")
+  #print(colMeasure)
+  #con_rel_sol initially would sometimes be an NA vector so lambda param needed to 
+  #scale with the problem in that case which is why the while loop is needed.
+  con_rel_sol  = NA
+  lambda_param =  median(distMat)/60
+  while(any(is.na(con_rel_sol))){
+    con_rel_sol = Barycenter_measure(colMeasure, distMat, maxIter = 20, lambda = lambda_param)
+    lambda_param = lambda_param + 0.1*lambda_param #if we get a non solution, increase lambda_param by 10% 
+  }
+  
+  
+  #print(con_rel_sol)
   for(i in 1:shard_num){
 
     index = sample(np*shard_num, np, replace = TRUE, prob = con_rel_sol)
@@ -437,3 +461,29 @@ df_split <- function (df, number){
   }
   return(list)
 }
+
+log_sum_exp = function(vec){
+  #computes log sum exp to prevent underflow
+  #accepts a vector of numbers
+  #returns logSumExp of the vector
+  max_val = max(c(vec))#, log(.Machine$double.xmin)))
+  temp = vec - max_val
+  output = log(sum(exp(temp))) + max_val
+  
+  
+  
+  print(" vec = ")
+  print(vec)
+  
+  print(" max_val = ")
+  print(max_val)
+  
+  print(" temp = ")
+  print(temp)
+  
+  print(" output = ")
+  print(output)
+  
+  return(output)
+}
+

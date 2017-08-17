@@ -7,11 +7,11 @@ plot_means = function(final_params, color){
 
 sample_particles = function(log_lik_wts, candidate_particles){
   np = length(log_lik_wts)
-  print("in sample_particles")
-  print( "log_lik_wts = ")
-  print(log_lik_wts)
-  print( "exp(log_lik_wts = ")
-  print( exp(log_lik_wts))
+  #print("in sample_particles")
+  #print( "log_lik_wts = ")
+  #print(log_lik_wts)
+  #print( "exp(log_lik_wts = ")
+  #print( exp(log_lik_wts))
   
   pn = length(log_lik_wts)
   p = exp(log_lik_wts)
@@ -27,7 +27,7 @@ sample_particles = function(log_lik_wts, candidate_particles){
     particles_out[[p]] = candidate_particles[[cp]]
     #points(particles_out[[p]]$mean, col = 'red')
   }
-  print("exit sample_particles")
+  #print("exit sample_particles")
   return(particles_out)
 }
 
@@ -472,17 +472,17 @@ log_sum_exp = function(vec){
   
   
   
-  print(" vec = ")
-  print(vec)
-  
-  print(" max_val = ")
-  print(max_val)
-  
-  print(" temp = ")
-  print(temp)
-  
-  print(" output = ")
-  print(output)
+  #print(" vec = ")
+  #print(vec)
+  #
+  #print(" max_val = ")
+  #print(max_val)
+  #
+  #print(" temp = ")
+  #print(temp)
+  #
+  #print(" output = ")
+  #print(output)
   
   return(output)
 }

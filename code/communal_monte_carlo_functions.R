@@ -136,7 +136,7 @@ sample_dirichlet = function(priors){
   return(prob_z_n)
 }
 
-particle_filter_MVN_iter = function(data_line, priors){
+particle_filter_MVN_iter = function(data_line, priors, sn){
   #print("entered(particle_filter_MVN_iter)")
   #weights
   prob_z_n = sample_dirichlet(priors)
@@ -194,7 +194,7 @@ particle_filter_MVN = function(file_name, priors_list, np, data_size, quit_after
       candidate_particles = list()
       log_lik_wts = rep(0, np)
       for(p in 1:np){
-        candidate_particles[[p]] = particle_filter_MVN_iter(data_line, priors_list[[p]])
+        candidate_particles[[p]] = particle_filter_MVN_iter(data_line, priors_list[[p]],sn)
         log_lik_wts[p]           = log_lik_mvn_mix(candidate_particles[[p]], data_line)
       }
       #print(log_lik_wts)

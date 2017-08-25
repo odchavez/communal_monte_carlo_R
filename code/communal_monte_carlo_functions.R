@@ -66,9 +66,9 @@ log_lik_mvn_mix = function(param_sample, dat){
 }
 
 
-sample_Sig_k = function(data_line, priors, z_i){#nu, Sig_prior, N, Y, mu, prior_mu, z_vec, K){
+sample_Sig_k = function(data_line, priors, z_i, sn){#nu, Sig_prior, N, Y, mu, prior_mu, z_vec, K){
   
-  n = 1
+  n = 1*sn
   
   x_bar = data_line
   p_mu = priors$mean[ z_i,]
@@ -88,11 +88,11 @@ sample_Sig_k = function(data_line, priors, z_i){#nu, Sig_prior, N, Y, mu, prior_
 }
 
 
-sample_mu_k = function(data_line, priors, z_i){
+sample_mu_k = function(data_line, priors, z_i, sn){
   
   prior_obs_size = priors$z_count[z_i] + priors$mean_size_init[z_i]
   prior_mu       = priors$mean[z_i,]
-  n              = 1
+  n              = 1*sn
   nu             = priors$nu[z_i]
   post_mean = (prior_obs_size * prior_mu + n*data_line)/(prior_obs_size + n)
   #print(post_mean)
@@ -138,23 +138,28 @@ sample_dirichlet = function(priors){
 
 particle_filter_MVN_iter = function(data_line, priors, sn){
   #print("entered(particle_filter_MVN_iter)")
+  #print(paste("sn = ", sn))
   #weights
   prob_z_n = sample_dirichlet(priors)
   priors$prob = prob_z_n
   #print("2 ran")
   #counts and class assignment
   z_i      = sample_z_i(priors, data_line)
-  priors$z_count[z_i] = priors$z_count[z_i] + 1
-  priors$nu[z_i] = priors$nu[z_i] + 1
+  priors$z_count[z_i] = priors$z_count[z_i] + 1*sn
+  
   #print("3 ran")
   #mean
-  mu_k = sample_mu_k(data_line, priors, z_i)
+  mu_k = sample_mu_k(data_line, priors, z_i, sn)
   priors$mean[z_i,] = mu_k
   #print("4 ran")
   
-  Sig_k = sample_Sig_k(data_line, priors, z_i)
+  Sig_k = sample_Sig_k(data_line, priors, z_i, sn)
   priors$sig[z_i,] = Sig_k
   #print("5 ran")
+  
+  #update new priors weight
+  priors$nu[z_i] = priors$nu[z_i] + 1*sn
+  
   return(priors)
 }
 
@@ -226,7 +231,7 @@ particle_filter_MVN_single_file = function(dat, priors_list, np, gs, sn, experim
         candidate_particles = list()
         log_lik_wts = rep(0, np)
         for(p in 1:np){
-            candidate_particles[[p]] = particle_filter_MVN_iter(as.numeric(dat[i,]), priors_list[[p]])
+            candidate_particles[[p]] = particle_filter_MVN_iter(as.numeric(dat[i,]), priors_list[[p]], sn)
             log_lik_wts[p]           = log_lik_mvn_mix(candidate_particles[[p]], as.numeric(dat[i,]))
         }
         #print("log_lik_wts")
@@ -487,3 +492,16 @@ log_sum_exp = function(vec){
   return(output)
 }
 
+bootstrap_columns = function(data, nrep, statistic){
+    
+    if(toupper(statistic) == "MEAN"){
+        nc = ncol(data)
+        nr = nrow(data)
+        output = matrix(NA, nrow = nrep, ncol = nc)
+        for(i in 1:nrep){
+            index      = sample(nr, nr, replace = TRUE)
+            output[i,] = colMeans(data[index,])
+        }
+    }  
+    return(output)
+}

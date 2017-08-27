@@ -15,10 +15,11 @@ options(max.print=999999)
 
 #MVN mixture Gibbs Sampler
 experiment_num = 1
-shard_num      = 6
-np             = 100
+shard_num      = 6    #processor number
+np             = 100  #particle number
+N              = 1000 #number of datapoints per file up to n below
 gstep_com      = TRUE 
-N              = 1000
+
 
 n              = 1000
 K              = 10
@@ -124,7 +125,8 @@ for(fn in 1:max_file_num){
 
 
 all_loglik = cbind(log_lik, all_loglik)
-names(all_loglik) = c("1 machine", "emb par", paste(1:max_global_step, "gs"))    
+names(all_loglik) = c("1 machine", "emb par", paste(1:max_global_step, "gs"))
+save(all_loglik, exp_results_fout_name)
 plot(log_lik_matrix[,"global_steps"], log_lik_matrix[,"mean"])
 boxplot(all_loglik, ylim = c(-10,0))
 bs_means = bootstrap_columns(all_loglik, nrep = 500, statistic = "mean")

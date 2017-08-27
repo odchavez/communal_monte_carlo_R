@@ -502,6 +502,7 @@ bootstrap_columns = function(data, nrep, statistic){
             index      = sample(nr, nr, replace = TRUE)
             output[i,] = colMeans(data[index,])
         }
-    }  
+    }
+    colnames(output) = colnames(data)
     return(output)
 }

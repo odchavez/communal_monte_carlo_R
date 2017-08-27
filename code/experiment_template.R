@@ -27,8 +27,9 @@ scale          = 100
 
 max_global_step = 10
 max_file_num    = 10
-files_list = c(1:10)
-global_steps_list = c(1:6)
+#files_list = c(1:10)
+#global_steps_list = c(1:6)
+exp_results_fout_name = paste0("results/log_lik_experiment_num=",experiment_num,"_file_num_10.csv")
 test_dat = read.csv(paste0("data/K=",K,"/d=",d,"_n=",n,"_file_num_10.csv"))[500,]
 log_lik_matrix = matrix(NA, nrow = max_global_step, ncol = 3)
 colnames(log_lik_matrix) = c("global_steps", "mean", "sd")
@@ -123,8 +124,9 @@ for(fn in 1:max_file_num){
 
 
 all_loglik = cbind(log_lik, all_loglik)
+names(all_loglik) = c("1 machine", "emb par", paste(1:max_global_step, "gs"))    
 plot(log_lik_matrix[,"global_steps"], log_lik_matrix[,"mean"])
 boxplot(all_loglik, ylim = c(-10,0))
 bs_means = bootstrap_columns(all_loglik, nrep = 500, statistic = "mean")
-    
+boxplot(bs_means, las = 2)
 

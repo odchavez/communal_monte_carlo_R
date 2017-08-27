@@ -127,8 +127,8 @@ for(fn in 1:max_file_num){
 all_loglik = cbind(log_lik, all_loglik)
 names(all_loglik) = c("1 machine", "emb par", paste(1:max_global_step, "gs"))
 save(all_loglik, exp_results_fout_name)
-plot(log_lik_matrix[,"global_steps"], log_lik_matrix[,"mean"])
-boxplot(all_loglik, ylim = c(-10,0))
-bs_means = bootstrap_columns(all_loglik, nrep = 500, statistic = "mean")
-boxplot(bs_means, las = 2)
+#plot(log_lik_matrix[,"global_steps"], log_lik_matrix[,"mean"])
+#boxplot(all_loglik, ylim = c(-10,0))
+#bs_means = bootstrap_columns(all_loglik, nrep = 500, statistic = "mean")
+#boxplot(bs_means, las = 2)
 

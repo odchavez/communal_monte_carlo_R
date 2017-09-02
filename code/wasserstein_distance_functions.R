@@ -71,7 +71,7 @@ make_A_eq = function(N1, N2){
 distance_between_samp_MVN_mix = function(Asamp, Bsamp){
   library(lpSolve)
   #gets the distance betwen
-  K_matrix = mu_dist_mat(Asamp$mean, Bsamp$mean) 
+  K_matrix = mu_dist_mat(Asamp$mean, Bsamp$mean, Asamp$sig, Bsamp$sig) 
   #print(K_matrix)
   c = as.vector(t(K_matrix))
   #b = np.array(list(np.array([Q['Pi'], P['Pi']]).flat))
@@ -111,130 +111,142 @@ distance_between_samp_MVN_mix = function(Asamp, Bsamp){
   #return(NULL)
 }
 
-greedy_d = function(A, B, per_num){
+#greedy_d = function(A, B, per_num){
+#
+#  min_val = Inf
+#  min_wts = NA
+#  #rep_num = 1
+#  #temp = rep(NA, per_num)
+#  for(i in 1:per_num){
+#    Ar = reorder(A)
+#    #print(Ar)
+#    Br = reorder(B)
+#    dist_mat   = mu_dist_mat(Ar$mean, Br$mean)
+#    wts_mat = weights_matrix(Ar, Br, dist_mat)
+#    temp = sum(wts_mat*dist_mat)
+#    #print("greedy_d weights matrix")
+#    #print(wts_mat)
+#    #output[i] = temp
+#    if(temp < min_val){
+#      min_wts = wts_mat
+#      min_val = temp
+#    }
+#  }
+#  #print("greedy_d weights matrix")
+#  #print(min_wts)
+#  #print(output)
+#  return(min_val)
+#  
+#}
 
-  min_val = Inf
-  min_wts = NA
-  #rep_num = 1
-  #temp = rep(NA, per_num)
-  for(i in 1:per_num){
-    Ar = reorder(A)
-    #print(Ar)
-    Br = reorder(B)
-    dist_mat   = mu_dist_mat(Ar$mean, Br$mean)
-    wts_mat = weights_matrix(Ar, Br, dist_mat)
-    temp = sum(wts_mat*dist_mat)
-    #print("greedy_d weights matrix")
-    #print(wts_mat)
-    #output[i] = temp
-    if(temp < min_val){
-      min_wts = wts_mat
-      min_val = temp
+#greedy_d_all_perm = function(A, B){
+#  
+#  min_val = Inf
+#  min_wts = NA
+#  N = length(A$prob)
+#  perm_list = permn(1:N)
+#  #print(perm_list)
+#  per_num = length(perm_list)
+#  #rep_num = 1
+#  #temp = rep(NA, per_num)
+#  for(i in 1:per_num){
+#    index = perm_list[[i]]
+#    #print(index)
+#    Ar = A
+#    Ar$prob = matrix(A$prob[,index], nrow = 1)
+#    Ar$mean = A$mean[index,]
+#    Ar$sig  = A$sig[index,]
+#    #print(Ar)
+#    #Br = reorder(B)
+#    dist_mat   = mu_dist_mat(Ar$mean, B$mean)
+#    wts_mat = weights_matrix(Ar, B, dist_mat)
+#    temp = sum(wts_mat*dist_mat)
+#    #print("greedy_d weights matrix")
+#    #print(wts_mat)
+#    #output[i] = temp
+#    if(temp < min_val){
+#      min_dist = dist_mat
+#      min_wts  = wts_mat
+#      min_val  = temp
+#    }
+#  }
+#  #print("greedy_d weights matrix")
+#  print(min_wts)
+#  print(min_dist)
+#  return(min_val)
+#  
+#}
+
+#greedy_d_eq_wts = function(A, B, per_num){
+#  
+#  min_val = Inf
+#  min_wts = NA
+#  #rep_num = 1
+#  #temp = rep(NA, per_num)
+#  for(i in 1:per_num){
+#    Ar = reorder(A)
+#    #print("checking length(B$prob)")
+#    #print(length(B$prob))
+#    #matrix(A$prob[,index], nrow = 1)
+#    Ar$prob = matrix(rep(1/length(A$prob), length(A$prob)), nrow = 1)
+#    #print(Ar)
+#    Br = reorder(B)
+#    Br$prob = matrix(rep(1/length(B$prob), length(B$prob)), nrow = 1)
+#    dist_mat   = mu_dist_mat(Ar$mean, Br$mean)
+#    wts_mat = weights_matrix(Ar, Br, dist_mat)
+#    temp = sum(wts_mat*dist_mat)
+#    #print("greedy_d weights matrix")
+#    #print(wts_mat)
+#    #output[i] = temp
+#    if(temp < min_val){
+#      min_wts = wts_mat
+#      min_val = temp
+#    }
+#  }
+#  #print("greedy_d weights matrix")
+#  #print(min_wts)
+#  #print(output)
+#  return(min_val)
+#  
+#}
+
+#greedy_d_mass_order = function(A, B, per_num){
+#  
+#  min_val = Inf
+#  min_wts = NA
+#  Ar = reorder_decreasing(A)
+#  Br = reorder_decreasing(B)
+#  dist_mat   = mu_dist_mat(Ar$mean, Br$mean)
+#  wts_mat = weights_matrix(Ar, Br, dist_mat)
+#  output = sum(wts_mat*dist_mat)
+#
+#  return(output)
+#  
+#}
+
+mu_dist_mat = function(mu1, mu2, all_C1, all_C2){
+    if("expm" %in% rownames(installed.packages()) == FALSE) {install.packages("expm")}
+    library(expm)
+    N = nrow(mu1)
+    d = ncol(mu1)
+    output = matrix(0, nrow = N, ncol = N)
+    for(r in 1:N){
+        for(c in 1:N){
+            #print(paste("postition: ", r, ",", c))
+            #print(mu1[r,])
+            #print(mu2[c,])
+            #C1       = matrix(all_C1[r,], nrow = d)
+            #print(C1)
+            #C2       = matrix(all_C2[c,], nrow = d)
+            #print(C2)
+            #sqrt_C2  = sqrtm(C2)
+            #print(sqrt_C2)
+            #temp_mat = sqrtm(sqrt_C2 %*% C1 %*% sqrt_C2) 
+            #print(temp_mat)
+            output[r,c] = sqrt(sum((mu1[r,] - mu2[c,])^2)) #+ sum(diag(C1 + C2 - 2*temp_mat))#note: sum(diag(M)) == trace(M)
+            print("last dist ran")
+        }
     }
-  }
-  #print("greedy_d weights matrix")
-  #print(min_wts)
-  #print(output)
-  return(min_val)
-  
-}
-
-greedy_d_all_perm = function(A, B){
-  
-  min_val = Inf
-  min_wts = NA
-  N = length(A$prob)
-  perm_list = permn(1:N)
-  #print(perm_list)
-  per_num = length(perm_list)
-  #rep_num = 1
-  #temp = rep(NA, per_num)
-  for(i in 1:per_num){
-    index = perm_list[[i]]
-    #print(index)
-    Ar = A
-    Ar$prob = matrix(A$prob[,index], nrow = 1)
-    Ar$mean = A$mean[index,]
-    Ar$sig  = A$sig[index,]
-    #print(Ar)
-    #Br = reorder(B)
-    dist_mat   = mu_dist_mat(Ar$mean, B$mean)
-    wts_mat = weights_matrix(Ar, B, dist_mat)
-    temp = sum(wts_mat*dist_mat)
-    #print("greedy_d weights matrix")
-    #print(wts_mat)
-    #output[i] = temp
-    if(temp < min_val){
-      min_dist = dist_mat
-      min_wts  = wts_mat
-      min_val  = temp
-    }
-  }
-  #print("greedy_d weights matrix")
-  print(min_wts)
-  print(min_dist)
-  return(min_val)
-  
-}
-
-greedy_d_eq_wts = function(A, B, per_num){
-  
-  min_val = Inf
-  min_wts = NA
-  #rep_num = 1
-  #temp = rep(NA, per_num)
-  for(i in 1:per_num){
-    Ar = reorder(A)
-    #print("checking length(B$prob)")
-    #print(length(B$prob))
-    #matrix(A$prob[,index], nrow = 1)
-    Ar$prob = matrix(rep(1/length(A$prob), length(A$prob)), nrow = 1)
-    #print(Ar)
-    Br = reorder(B)
-    Br$prob = matrix(rep(1/length(B$prob), length(B$prob)), nrow = 1)
-    dist_mat   = mu_dist_mat(Ar$mean, Br$mean)
-    wts_mat = weights_matrix(Ar, Br, dist_mat)
-    temp = sum(wts_mat*dist_mat)
-    #print("greedy_d weights matrix")
-    #print(wts_mat)
-    #output[i] = temp
-    if(temp < min_val){
-      min_wts = wts_mat
-      min_val = temp
-    }
-  }
-  #print("greedy_d weights matrix")
-  #print(min_wts)
-  #print(output)
-  return(min_val)
-  
-}
-
-greedy_d_mass_order = function(A, B, per_num){
-  
-  min_val = Inf
-  min_wts = NA
-  Ar = reorder_decreasing(A)
-  Br = reorder_decreasing(B)
-  dist_mat   = mu_dist_mat(Ar$mean, Br$mean)
-  wts_mat = weights_matrix(Ar, Br, dist_mat)
-  output = sum(wts_mat*dist_mat)
-
-  return(output)
-  
-}
-
-mu_dist_mat = function(mu1, mu2){
-  N = nrow(mu1)
-  output = matrix(0, nrow = N, ncol = N)
-  for(r in 1:N){
-    for(c in 1:N){
-      #print(paste("postition: ", r, ",", c))
-      #print(mu1[r,])
-      #print(mu2[c,])
-      output[r,c] = sqrt(sum((mu1[r,] - mu2[c,])^2))
-    }
-  }
   #print(output)
   return(output)
 }

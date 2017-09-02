@@ -503,6 +503,15 @@ bootstrap_columns = function(data, nrep, statistic){
             output[i,] = colMeans(data[index,])
         }
     }
+    if(toupper(statistic) == "MEDIAN"){
+        nc = ncol(data)
+        nr = nrow(data)
+        output = matrix(NA, nrow = nrep, ncol = nc)
+        for(i in 1:nrep){
+            index      = sample(nr, nr, replace = TRUE)
+            output[i,] = apply(data[index,], 2, median)
+        }
+    }
     colnames(output) = colnames(data)
     return(output)
 }

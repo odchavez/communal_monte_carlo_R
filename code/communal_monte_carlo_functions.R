@@ -347,7 +347,14 @@ omars_file_name = function(K, d, n, file_num){
 #  
 #}
 
-do_communal_mc_MVN_mix = function(global_steps, shard_num, K, d, n, priors_list, quit_after_n, experiment_num, gstep_com){
+do_communal_mc_MVN_mix = function(data_file, 
+                                  global_steps, 
+                                  shard_num, 
+                                  K, d, n, 
+                                  priors_list, 
+                                  quit_after_n, 
+                                  experiment_num, 
+                                  gstep_com){
   for(gs in 1:global_steps){
     
     
@@ -362,7 +369,7 @@ do_communal_mc_MVN_mix = function(global_steps, shard_num, K, d, n, priors_list,
                              
       #sn = 1                       
       file_num  = sn + (gs - 1)*shard_num
-      data_file = omars_file_name(K, d, n, file_num)
+      #data_file = omars_file_name(K, d, n, file_num)
       particle_filter_MVN(data_file, priors_list[[sn]], length(priors_list[[sn]]), n, quit_after_n, gs, sn,experiment_num, global_steps)
       
       
@@ -387,33 +394,33 @@ do_communal_mc_MVN_mix_single_file = function(dat, global_steps, shard_num, prio
   
   data_part = partition_data(dat, global_steps, shard_num)
   for(gs in 1:global_steps){
-    #cl <- makeCluster(shard_num)
-    #registerDoParallel(cl)
-    #final_params = foreach(sn = 1:shard_num, 
-    #                       .packages = c("MCMCpack", "mvtnorm")) %dopar%{
-    #                         source("code/communal_monte_carlo_functions.R")
-    #                         writeLines(c(""), paste0("logfiles/experiment_num=",experiment_num,"_shard=",sn,".txt"))
-    #                         particle_filter_MVN_single_file( data_part[[sn]][[gs]], 
-    #                                                          priors_list[[sn]], 
-    #                                                          length(priors_list[[sn]]), 
-    #                                                          gs, 
-    #                                                          sn,
-    #                                                          experiment_num, 
-    #                                                          global_steps)
-    #                       }
-    #stopCluster(cl)
+    cl <- makeCluster(shard_num)
+    registerDoParallel(cl)
+    final_params = foreach(sn = 1:shard_num, 
+                           .packages = c("MCMCpack", "mvtnorm")) %dopar%{
+                             source("code/communal_monte_carlo_functions.R")
+                             writeLines(c(""), paste0("logfiles/experiment_num=",experiment_num,"_shard=",sn,".txt"))
+                             particle_filter_MVN_single_file( data_part[[sn]][[gs]], 
+                                                              priors_list[[sn]], 
+                                                              length(priors_list[[sn]]), 
+                                                              gs, 
+                                                              sn,
+                                                              experiment_num, 
+                                                              global_steps)
+                           }
+    stopCluster(cl)
     ##################################
     #to debug use:
-    final_params = list()
-    for(sn in 1:shard_num){
-        final_params[[sn]] = particle_filter_MVN_single_file( data_part[[sn]][[gs]], 
-                                         priors_list[[sn]], 
-                                         length(priors_list[[sn]]), 
-                                         gs, 
-                                         sn,
-                                         experiment_num, 
-                                         global_steps)
-    }
+    #final_params = list()
+    #for(sn in 1:shard_num){
+    #    final_params[[sn]] = particle_filter_MVN_single_file( data_part[[sn]][[gs]], 
+    #                                     priors_list[[sn]], 
+    #                                     length(priors_list[[sn]]), 
+    #                                     gs, 
+    #                                     sn,
+    #                                     experiment_num, 
+    #                                     global_steps)
+    #}
     ###################################
     
     if(gstep_com == FALSE){

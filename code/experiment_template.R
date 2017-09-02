@@ -26,7 +26,7 @@ K              = 10
 d              = 2
 scale          = 100
 
-max_global_step = 10
+max_global_step = 5
 max_file_num    = 10
 #files_list = c(1:10)
 #global_steps_list = c(1:6)
@@ -129,6 +129,6 @@ names(all_loglik) = c("1 machine", "emb par", paste(1:max_global_step, "gs"))
 save(all_loglik, exp_results_fout_name)
 plot(log_lik_matrix[,"global_steps"], log_lik_matrix[,"mean"])
 boxplot(all_loglik, ylim = c(-10,0))
-bs_means = bootstrap_columns(all_loglik, nrep = 500, statistic = "mean")
+bs_means = bootstrap_columns(all_loglik, nrep = 500, statistic = "median")
 boxplot(bs_means, las = 2)
 

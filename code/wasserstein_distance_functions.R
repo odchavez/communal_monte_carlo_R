@@ -424,8 +424,9 @@ get_distMat = function(all_chains){
   ULC = unlist_chians(all_chains)
   acL = length(ULC)
 
-  cores=detectCores()
-  cl <- makeCluster(cores[1]) 
+  #cores=detectCores()
+  #cl <- makeCluster(cores[1])
+  cl <- makeCluster(acL)
   registerDoParallel(cl)
   
   pre_distMat = foreach(cn_1 = 1:acL, .packages = "lpSolve", 

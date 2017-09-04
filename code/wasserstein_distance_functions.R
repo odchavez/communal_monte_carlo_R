@@ -225,8 +225,8 @@ distance_between_samp_MVN_mix = function(Asamp, Bsamp){
 #}
 
 mu_dist_mat = function(mu1, mu2, all_C1, all_C2){
-    if("expm" %in% rownames(installed.packages()) == FALSE) {install.packages("expm")}
-    library(expm)
+    #if("expm" %in% rownames(installed.packages()) == FALSE) {install.packages("expm")}
+    #library(expm)
     N = nrow(mu1)
     d = ncol(mu1)
     output = matrix(0, nrow = N, ncol = N)
@@ -425,8 +425,7 @@ get_distMat = function(all_chains){
   acL = length(ULC)
 
   #cores=detectCores()
-  #cl <- makeCluster(cores[1])
-  cl <- makeCluster(acL)
+  cl <- makeCluster(acL)#cores[1]) 
   registerDoParallel(cl)
   
   pre_distMat = foreach(cn_1 = 1:acL, .packages = "lpSolve", 

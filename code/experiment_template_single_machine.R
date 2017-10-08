@@ -8,7 +8,7 @@ library(doParallel)
 library(Matrix )
 library(lpSolve)
 
-#setwd("/work/03330/ochavez/stampede2/communal_monte_carlo/communal_monte_carlo_R")
+setwd("/work/03330/ochavez/stampede2/communal_monte_carlo/communal_monte_carlo_R")
 source("code/wasserstein_distance_functions.R")
 source("code/barycenter.r")
 source("code/communal_monte_carlo_functions.R")
@@ -35,7 +35,7 @@ for(fn in 1:max_file_num){
   
     file_num       = fn
   
-    data_file_name = paste0("data/K=",K,"/d=",d,"_n=",n,"_file_num_",file_num,".csv")
+    data_file_name = paste0("data/K=",K,"_n=",n,"/d=",d,"_n=",n,"_file_num_",file_num,".csv")
     dat            = read.csv(data_file_name)[1:floor(N), ]
     priors_list    = get_default_priors(K, d, scale, np, shard_num)
     posterior_list = do_communal_mc_MVN_mix_single_file(dat, 

@@ -5,7 +5,7 @@
 #SBATCH -n 10         					# Total number of mpi tasks requested
 #SBATCH -p normal     					# Submit to the 'normal' or 'development' queue
 #SBATCH -t 10:00:00 	  	   			# Run time (hh:mm:ss)
-#SBATCH -A A-Bayesian-causal-infe   	# Allocation name to charge job against
+#SBATCH -A ParallelBNP   	# Allocation name to charge job against
 #SBATCH --mail-user=ochavez@utexas.edu	# specify email address for notifications
 #SBATCH --mail-type=begin   # email when job begins
 #SBATCH --mail-type=end     # email when job ends

@@ -42,7 +42,7 @@ for(g in 1:lgs){
         print(paste("global step = ",global_steps_list[g]," file number = ",fn))
         file_num       = fn
       
-        data_file_name = paste0("data/K=",K,"/d=",d,"_n=",n,"_file_num_",file_num,".csv")
+        data_file_name = paste0("data/K=",K,"_n=",n,"/d=",d,"_n=",n,"_file_num_",file_num,".csv")
         dat            = read.csv(data_file_name)[1:N, ]
         priors_list    = get_default_priors(K, d, scale, np, shard_num)
         posterior_list = do_communal_mc_MVN_mix_single_file(dat, 

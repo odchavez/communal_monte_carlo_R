@@ -14,4 +14,4 @@
 module load Rstats           
 
 # call R code from RMPISNOW
-ibrun RMPISNOW < experiment_template_cmc_3gs_bcwts_.R 
+ibrun RMPISNOW < experiment_template_cmc_3gs_bcwts.R 

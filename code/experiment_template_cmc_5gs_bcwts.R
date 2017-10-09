@@ -8,7 +8,7 @@ library(doParallel)
 library(Matrix )
 library(lpSolve)
 
-#setwd("/work/03330/ochavez/stampede2/communal_monte_carlo/communal_monte_carlo_R")
+setwd("/work/03330/ochavez/stampede2/communal_monte_carlo/communal_monte_carlo_R")
 source("code/wasserstein_distance_functions.R")
 source("code/barycenter.r")
 source("code/communal_monte_carlo_functions.R")

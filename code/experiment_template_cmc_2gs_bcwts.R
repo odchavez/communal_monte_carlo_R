@@ -16,7 +16,7 @@ source("code/communal_monte_carlo_functions.R")
 options(max.print=999999)
 
 #MVN mixture Gibbs Sampler
-experiment_num = 1
+experiment_num = 3
 shard_num      = 10    #processor number
 np             = 200  #particle number
 N              = 1e+06 #number of datapoints per file up to n below

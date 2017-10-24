@@ -282,7 +282,7 @@ get_new_priors = function(final_params, shard_num, np){
   #con_rel_sol initially would sometimes be an NA vector so lambda param needed to 
   #scale with the problem in that case which is why the while loop is needed.
   con_rel_sol  = NA
-  lambda_param =  median(distMat)/60
+  lambda_param =  60/median(distMat)
   while(any(is.na(con_rel_sol))){
     con_rel_sol = Barycenter_measure(colMeasure, distMat, maxIter = 20, lambda = lambda_param)
     lambda_param = lambda_param + 0.1*lambda_param #if we get a non solution, increase lambda_param by 10% 

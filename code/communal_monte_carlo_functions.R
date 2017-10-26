@@ -66,7 +66,7 @@ log_lik_mvn_mix = function(param_sample, dat){
 }
 
 
-sample_Sig_k = function(data_line, priors, z_i, sn){#nu, Sig_prior, N, Y, mu, prior_mu, z_vec, K){
+sample_Sig_k = function(data_line, priors, z_i, sn, exp_val){#nu, Sig_prior, N, Y, mu, prior_mu, z_vec, K){
   
   n = 1*sn
   
@@ -82,26 +82,36 @@ sample_Sig_k = function(data_line, priors, z_i, sn){#nu, Sig_prior, N, Y, mu, pr
   T_n    = T + M
   post_COV = T_n/(nu * (nu - d + 1))
   post_pred_cov = post_COV*(nu + 1)
-  Sig = solve(riwish(v = n+nu, S = T_n))
-  output = as.vector(Sig)
+  if(exp_val == TRUE){
+      output = post_pred_cov
+  }else{
+      Sig = solve(riwish(v = n+nu, S = T_n))
+      output = as.vector(Sig)
+  }
+
   return(output)
 }
 
 
-sample_mu_k = function(data_line, priors, z_i, sn){
+sample_mu_k = function(data_line, priors, z_i, sn, exp_val){
   
   prior_obs_size = priors$z_count[z_i] + priors$mean_size_init[z_i]
   prior_mu       = priors$mean[z_i,]
   n              = 1*sn
   nu             = priors$nu[z_i]
   post_mean = (prior_obs_size * prior_mu + n*data_line)/(prior_obs_size + n)
-  #print(post_mean)
-  d = length(prior_mu)
-  #print(class(z_i))
-  #print(priors$sig[z_i,])
-  #print(matrix(priors$sig[z_i,], ncol = d))
-  post_cov = matrix(priors$sig[z_i,], ncol = d)/(nu * (nu - d + 1))
-  output = mvrnorm(n = 1, post_mean, post_cov)
+  
+  if(exp_val == TRUE){
+      output = post_mean
+  }else{
+      #print(post_mean)
+      d = length(prior_mu)
+      #print(class(z_i))
+      #print(priors$sig[z_i,])
+      #print(matrix(priors$sig[z_i,], ncol = d))
+      post_cov = matrix(priors$sig[z_i,], ncol = d)/(nu * (nu - d + 1))
+      output = mvrnorm(n = 1, post_mean, post_cov)
+  }
   
   return(output)
 }
@@ -128,10 +138,15 @@ sample_z_i = function(priors, data_line){
   return(z_i)
 }
 
-sample_dirichlet = function(priors){
+sample_dirichlet = function(priors, exp_val){
   n = sum(priors$z_count)
   alpha_vec = (priors$z_count + priors$alpha_k)#/(n - 1 + sum(priors$alpha_k))
-  prob_z_n = rdirichlet(1, alpha_vec)
+  if(exp_val == TRUE){
+      prob_z_n = (priors$z_count + priors$alpha_k)/(n - 1 + sum(priors$alpha_k))
+  }else{
+      prob_z_n = rdirichlet(1, alpha_vec)    
+  }
+  
   #print(prob_z_n)
   return(prob_z_n)
 }
@@ -140,7 +155,7 @@ particle_filter_MVN_iter = function(data_line, priors, sn){
   #print("entered(particle_filter_MVN_iter)")
   #print(paste("sn = ", sn))
   #weights
-  prob_z_n = sample_dirichlet(priors)
+  prob_z_n = sample_dirichlet(priors, exp_val = TRUE)
   priors$prob = prob_z_n
   #print("2 ran")
   #counts and class assignment
@@ -149,11 +164,11 @@ particle_filter_MVN_iter = function(data_line, priors, sn){
   
   #print("3 ran")
   #mean
-  mu_k = sample_mu_k(data_line, priors, z_i, sn)
+  mu_k = sample_mu_k(data_line, priors, z_i, sn, exp_val = TRUE)
   priors$mean[z_i,] = mu_k
   #print("4 ran")
   
-  Sig_k = sample_Sig_k(data_line, priors, z_i, sn)
+  Sig_k = sample_Sig_k(data_line, priors, z_i, sn, exp_val = TRUE)
   priors$sig[z_i,] = Sig_k
   #print("5 ran")
   

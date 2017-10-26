@@ -323,11 +323,13 @@ save_particles = function(particles,
                           global_steps, 
                           K, d, n, np, 
                           experiment_num,
-                          file_num){
+                          file_num,
+                          type){
   
-  file_name = paste('particles/',     
-                    'K=',   toString(K),
-                    'd=',   toString(d),
+  file_name = paste('particles/',
+                    'Type=', type,
+                    '_K=',   toString(K),
+                    '_d=',   toString(d),
                     #'_n=',  toString(min(n, quit_after_n)*shard_num*global_steps),
                     '_n=',  toString(n),
                     '_pn=', toString(np),

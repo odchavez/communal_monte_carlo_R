@@ -22,7 +22,7 @@ options(max.print=999999)
 
 #MVN mixture Gibbs Sampler
 file_num       = 1
-N              = 500   #number of datapoints per file up to n below
+N              = 100000   #number of datapoints per file up to n below
 experiment_num = 0
 
 shard_num      = 1     #processor number

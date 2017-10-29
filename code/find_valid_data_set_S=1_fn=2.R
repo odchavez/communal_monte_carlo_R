@@ -9,9 +9,9 @@ library(Matrix )
 library(lpSolve)
 
 tacc_wd = "/work/03330/ochavez/stampede2/communal_monte_carlo/communal_monte_carlo_R"
-if(file.exists(tacc_wd)){
+#if(file.exists(tacc_wd)){
     setwd(tacc_wd)    
-}
+#}
 
 source("code/wasserstein_distance_functions.R")
 source("code/barycenter.r")

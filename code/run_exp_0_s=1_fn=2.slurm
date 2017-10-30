@@ -14,4 +14,4 @@
 module load Rstats           
 
 # call R code from RMPISNOW
-ibrun RMPISNOW < find_valid_data_set_S=1_fn=2.R 
+ibrun RMPISNOW < code/find_valid_data_set_S=1_fn=2.R 

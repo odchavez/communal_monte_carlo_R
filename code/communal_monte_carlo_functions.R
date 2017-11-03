@@ -162,7 +162,7 @@ particle_filter_MVN_iter = function(data_line, priors, sn){
   #print("entered(particle_filter_MVN_iter)")
   #print(paste("sn = ", sn))
   #weights
-  prob_z_n = sample_dirichlet(priors, exp_val = TRUE)
+  prob_z_n = sample_dirichlet(priors, exp_val = FALSE)
   priors$prob = prob_z_n
   #print("2 ran")
   #counts and class assignment
@@ -171,11 +171,11 @@ particle_filter_MVN_iter = function(data_line, priors, sn){
   
   #print("3 ran")
   #mean
-  mu_k = sample_mu_k(data_line, priors, z_i, sn, exp_val = TRUE)
+  mu_k = sample_mu_k(data_line, priors, z_i, sn, exp_val = FALSE)
   priors$mean[z_i,] = mu_k
   #print("4 ran")
   
-  Sig_k = sample_Sig_k(data_line, priors, z_i, sn, exp_val = TRUE)
+  Sig_k = sample_Sig_k(data_line, priors, z_i, sn, exp_val = FALSE)
   priors$sig[z_i,] = Sig_k
   #print("5 ran")
   

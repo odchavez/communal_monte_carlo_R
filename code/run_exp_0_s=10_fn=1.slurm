@@ -2,7 +2,7 @@
 #SBATCH -J experiment_0     			# Job name
 #SBATCH -o experiment_.o%j   			# Name of stdout output file (%j expands to jobId)
 #SBATCH -e experiment_.o%j 	  		    # Name of stderr output file(%j expands to jobId)
-#SBATCH -n 10         					# Total number of mpi tasks requested
+#SBATCH -n 16         					# Total number of mpi tasks requested
 #SBATCH -p normal     					# Submit to the 'normal' or 'development' queue
 #SBATCH -t 48:00:00 	  	   			# Run time (hh:mm:ss)
 #SBATCH -A ParallelBNP   	# Allocation name to charge job against

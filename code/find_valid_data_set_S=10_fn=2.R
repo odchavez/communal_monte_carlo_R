@@ -48,11 +48,12 @@ dat            = read.csv(data_file_name)[1:floor(N), ]
 priors_list    = get_default_priors(K, d, scale, np, shard_num)
 
 posterior_list = do_communal_mc_MVN_mix_single_file(dat, 
-                                                      global_steps, 
-                                                      shard_num,  
-                                                      priors_list, 
-                                                      experiment_num, 
-                                                      gstep_com = FALSE)
+                                                    global_steps, 
+                                                    shard_num,  
+                                                    priors_list, 
+                                                    experiment_num, 
+                                                    gstep_com = FALSE,
+                                                    file_num)
 
 save_particles(posterior_list, shard_num, global_steps, K, d, n, np, experiment_num, file_num,type="S=1")
   

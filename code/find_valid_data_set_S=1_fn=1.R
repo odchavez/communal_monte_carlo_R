@@ -22,17 +22,17 @@ options(max.print=999999)
 
 #MVN mixture Gibbs Sampler
 file_num       = 1
-N              = 100000   #number of datapoints per file up to n below
+N              = 20000 #number of datapoints per file up to n below
 experiment_num = 0
 
 shard_num      = 1     #processor number
-np             = 200   #particle number
+np             = 5000  #particle number
  
 
-n              = 1e+06
+n              = 20000
 K              = 10
 d              = 2
-scale          = 100
+scale          = 10
 
 
 

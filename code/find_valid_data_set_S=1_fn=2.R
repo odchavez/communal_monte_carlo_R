@@ -29,7 +29,7 @@ shard_num      = 1     #processor number
 np             = 5000  #particle number
  
 
-n              = 2000
+n              = 20000
 K              = 10
 d              = 2
 scale          = 10

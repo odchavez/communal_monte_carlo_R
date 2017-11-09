@@ -22,17 +22,17 @@ options(max.print=999999)
 
 #MVN mixture Gibbs Sampler
 file_num       = 2
-N              = 100000   #number of datapoints per file up to n below
+N              = 20000 #number of datapoints per file up to n below
 experiment_num = 0
 
 shard_num      = 1     #processor number
-np             = 200   #particle number
+np             = 5000  #particle number
  
 
-n              = 1e+06
+n              = 2000
 K              = 10
 d              = 2
-scale          = 100
+scale          = 10
 
 
 
@@ -48,11 +48,12 @@ dat            = read.csv(data_file_name)[1:floor(N), ]
 priors_list    = get_default_priors(K, d, scale, np, shard_num)
 
 posterior_list = do_communal_mc_MVN_mix_single_file(dat, 
-                                                      global_steps, 
-                                                      shard_num = 1,  
-                                                      priors_list, 
-                                                      experiment_num, 
-                                                      gstep_com = FALSE)
+                                                    global_steps, 
+                                                    shard_num = 1,  
+                                                    priors_list, 
+                                                    experiment_num, 
+                                                    gstep_com = FALSE,
+                                                    file_num)
 
 save_particles(posterior_list, shard_num, global_steps, K, d, n, np, experiment_num, file_num,type="S=1")
   
